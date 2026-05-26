@@ -72,6 +72,7 @@ def ask_rag(question, history):
                     file
                     .replace(".pdf", "")
                     .replace("_", " ")
+                    .replace("-", " ")
                     .lower()
                 )
 
