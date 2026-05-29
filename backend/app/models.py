@@ -6,4 +6,4 @@ class QueryRequest(BaseModel):
 
     query: str
 
-    history: List = [] 
+    history: List = []

@@ -1,177 +1,202 @@
-from app.vector_store import retriever
+from app.vector_store import vectorstore
 from app.llm import generate_response
 
-import os
 
-from app.config import DOCUMENTS_PATH
+POLICIES = {
+    "easy health": "HDFC-Life-Easy-Health",
+    "surgicare": "HDFC-Surgicare",
+    "group term": "HDFC-Life-Group-Term-Life",
+    "sanchay plus": "HDFC-Life-Sanchay-Plus",
+    "smart pension": "HDFC-Life-Smart-Pension",
+    "sampoorna jeevan": "HDFC-Life-Sampoorna-Jeevan",
+}
+
+
+def detect_policy(question):
+
+    question_lower = question.lower()
+
+    for policy_key, policy_file in POLICIES.items():
+
+        if policy_key in question_lower:
+            return policy_file
+
+    return None
+
+
+def rerank_score(doc, question):
+
+    text = doc.page_content.lower()
+
+    score = 0
+
+    try:
+        page = int(
+            doc.metadata.get(
+                "page",
+                0
+            )
+        )
+    except:
+        page = 0
+
+    # boost later pages
+    if page >= 5:
+        score += 3
+
+    question_words = set(
+        question.lower().split()
+    )
+
+    for word in question_words:
+
+        if (
+            len(word) > 3
+            and word in text
+        ):
+            score += 1
+
+    return score
 
 
 def ask_rag(question, history):
 
-    question_lower = question.lower()
+    selected_policy = detect_policy(question)
 
-    # =========================
-    # RETRIEVE CHUNKS
-    # =========================
-
-    retrieved_docs = retriever.invoke(
-        question
+    # retrieve many chunks
+    docs = vectorstore.similarity_search(
+        question,
+        k=100
     )
 
-    current_policy = None
+    # policy filtering
+    if selected_policy:
 
-    # =========================
-    # DETECT POLICY
-    # =========================
+        policy_docs = []
 
-    for file in os.listdir(DOCUMENTS_PATH):
+        for doc in docs:
 
-        clean_name = (
-            file
-            .replace(".pdf", "")
-            .replace("_", " ")
-            .replace("-", " ")
-            .lower()
-        )
-
-        # PARTIAL MATCH
-        words = clean_name.split()
-
-        match_count = 0
-
-        for word in words:
-
-            if word in question_lower:
-
-                match_count += 1
-
-        if match_count >= 2:
-
-            current_policy = file
-
-            break
-
-    # =========================
-    # HISTORY POLICY MEMORY
-    # =========================
-
-    if not current_policy:
-
-        for message in reversed(history):
-
-            content = message.get(
-                "content",
+            policy_name = doc.metadata.get(
+                "policy_name",
                 ""
-            ).lower()
-
-            for file in os.listdir(
-                DOCUMENTS_PATH
-            ):
-
-                clean_name = (
-                    file
-                    .replace(".pdf", "")
-                    .replace("_", " ")
-                    .replace("-", " ")
-                    .lower()
-                )
-
-                words = clean_name.split()
-
-                match_count = 0
-
-                for word in words:
-
-                    if word in content:
-
-                        match_count += 1
-
-                if match_count >= 2:
-
-                    current_policy = file
-
-                    break
-
-            if current_policy:
-                break
-
-    # =========================
-    # FILTER RETRIEVED DOCS
-    # =========================
-
-    docs = []
-
-    if current_policy:
-
-        for doc in retrieved_docs:
+            )
 
             if (
-                doc.metadata.get(
-                    "policy_name"
-                ) == current_policy
+                selected_policy.lower()
+                in policy_name.lower()
             ):
+                policy_docs.append(doc)
 
-                docs.append(doc)
+        print(
+            f"\nUSING POLICY: {selected_policy}"
+        )
 
-    # FALLBACK
-    if len(docs) == 0:
+        print(
+            f"FOUND {len(policy_docs)} POLICY CHUNKS"
+        )
 
-        docs = retrieved_docs
+        if policy_docs:
 
-    # =========================
-    # DEBUGGING
-    # =========================
+            policy_docs = sorted(
+                policy_docs,
+                key=lambda d: rerank_score(
+                    d,
+                    question
+                ),
+                reverse=True
+            )
 
-    print("\nACTIVE POLICY:")
-    print(current_policy)
+            docs = policy_docs[:20]
 
-    # =========================
-    # CONTEXT
-    # =========================
+        else:
 
-    context = "\n\n".join(
-        [doc.page_content for doc in docs]
+            docs = docs[:20]
+
+    else:
+
+        docs = docs[:20]
+
+    print(
+        "\n========== RETRIEVED CHUNKS ==========\n"
     )
 
-    # =========================
-    # MEMORY
-    # =========================
+    for i, doc in enumerate(docs):
+
+        print(
+            f"\nCHUNK {i + 1}"
+        )
+
+        print(doc.metadata)
+
+        print(
+            doc.page_content[:1000]
+        )
+
+        print(
+            "\n=========================\n"
+        )
+
+    context = "\n\n".join(
+        [
+            f"Source: {doc.metadata.get('policy_name', '')}\n{doc.page_content}"
+            for doc in docs
+        ]
+    )
 
     conversation_history = ""
 
     for message in history[-6:]:
 
-        role = message.get("role")
+        role = message.get(
+            "role",
+            ""
+        )
 
-        content = message.get("content")
+        content = message.get(
+            "content",
+            ""
+        )
 
         conversation_history += (
             f"{role}: {content}\n"
         )
 
-    # =========================
-    # PROMPT
-    # =========================
-
-    prompt = f'''
+    prompt = f"""
 You are a highly accurate insurance policy assistant.
 
 STRICT RULES:
-1. Answer ONLY using the provided documents.
-2. NEVER use outside insurance knowledge.
-3. NEVER guess.
-4. If information is missing, say:
+
+1. Answer ONLY using the provided insurance documents.
+
+2. Do NOT use outside knowledge.
+
+3. Do NOT guess, infer, estimate, or assume.
+
+4.RESPONSE FORMATTING RULES:
+
+Write clear and professional answers.
+Use multiple paragraphs when appropriate.
+Leave a blank line between paragraphs.
+
+5. If the provided documents contain information relevant to the question, answer using that information.
+
+6. Only reply exactly:
 "This information is not found in the provided documents."
+when the retrieved context contains no relevant information.
+
+7. Do not mix information from different policies.
+
+8. If a policy name is mentioned in the question, answer only from that policy.
 
 Conversation History:
 {conversation_history}
 
-Documents:
+Insurance Documents:
 {context}
 
 Question:
 {question}
-'''
+"""
 
     answer = generate_response(prompt)
 
