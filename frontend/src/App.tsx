@@ -254,7 +254,7 @@ export default function App() {
             <div className="empty-state">
               <div className="empty-hero">
                 <div className="empty-icon">
-                  <i className="ti ti-shield" aria-hidden="true" />
+                  <img src="assets\favicon.png" alt="" />
                 </div>
                 <div>
                   <div className="empty-title">MSDS Safety Assistant</div>
