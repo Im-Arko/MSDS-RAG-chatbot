@@ -1,6 +1,11 @@
 from app.vector_store import vectorstore
 from app.llm import generate_response
 
+MAX_RETRIEVAL_DOCS = 100
+MAX_PROMPT_DOCS = 10
+MAX_DOC_CHARS = 1200
+MAX_HISTORY_ENTRIES = 4
+
 
 def rerank_score(doc, question):
 
@@ -42,7 +47,7 @@ def ask_rag(question, history):
     # retrieve relevant chunks
     docs = vectorstore.similarity_search(
         question,
-        k=100
+        k=MAX_RETRIEVAL_DOCS
     )
 
     # rerank and select top documents
@@ -55,7 +60,7 @@ def ask_rag(question, history):
         reverse=True
     )
 
-    docs = docs[:20]
+    docs = docs[:MAX_PROMPT_DOCS]
 
     print(
         "\n========== RETRIEVED CHUNKS ==========\n"
@@ -79,14 +84,14 @@ def ask_rag(question, history):
 
     context = "\n\n".join(
         [
-            f"Source: {doc.metadata.get('source_file', 'Unknown')}\n{doc.page_content}"
+            doc.page_content if len(doc.page_content) <= MAX_DOC_CHARS else doc.page_content[:MAX_DOC_CHARS] + '\n...[truncated]'
             for doc in docs
         ]
     )
 
     conversation_history = ""
 
-    for message in history[-6:]:
+    for message in history[-MAX_HISTORY_ENTRIES:]:
 
         role = message.get(
             "role",
@@ -119,13 +124,15 @@ Write clear and professional answers.
 Use multiple paragraphs when appropriate.
 Leave a blank line between paragraphs.
 
-5. If the provided documents contain information relevant to the question, answer using that information.
+5. Do not mention filenames, page numbers, or page locations in your answer.
+6. Do not repeat source metadata or context labels unless explicitly requested.
+7. If the provided documents contain information relevant to the question, answer using that information and dont repeat the document title mutiple times.
 
-6. Only reply exactly:
+8. Only reply exactly:
 "This information is not found in the provided MSDS documents."
 when the retrieved context contains no relevant information.
 
-7. Prioritize safety and health information when answering questions about hazards, precautions, or emergency procedures.
+9. Prioritize safety and health information when answering questions about hazards, precautions, or emergency procedures.
 
 Conversation History:
 {conversation_history}
