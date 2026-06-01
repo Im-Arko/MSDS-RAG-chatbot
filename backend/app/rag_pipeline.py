@@ -2,28 +2,6 @@ from app.vector_store import vectorstore
 from app.llm import generate_response
 
 
-POLICIES = {
-    "easy health": "HDFC-Life-Easy-Health",
-    "surgicare": "HDFC-Surgicare",
-    "group term": "HDFC-Life-Group-Term-Life",
-    "sanchay plus": "HDFC-Life-Sanchay-Plus",
-    "smart pension": "HDFC-Life-Smart-Pension",
-    "sampoorna jeevan": "HDFC-Life-Sampoorna-Jeevan",
-}
-
-
-def detect_policy(question):
-
-    question_lower = question.lower()
-
-    for policy_key, policy_file in POLICIES.items():
-
-        if policy_key in question_lower:
-            return policy_file
-
-    return None
-
-
 def rerank_score(doc, question):
 
     text = doc.page_content.lower()
@@ -61,60 +39,23 @@ def rerank_score(doc, question):
 
 def ask_rag(question, history):
 
-    selected_policy = detect_policy(question)
-
-    # retrieve many chunks
+    # retrieve relevant chunks
     docs = vectorstore.similarity_search(
         question,
         k=100
     )
 
-    # policy filtering
-    if selected_policy:
+    # rerank and select top documents
+    docs = sorted(
+        docs,
+        key=lambda d: rerank_score(
+            d,
+            question
+        ),
+        reverse=True
+    )
 
-        policy_docs = []
-
-        for doc in docs:
-
-            policy_name = doc.metadata.get(
-                "policy_name",
-                ""
-            )
-
-            if (
-                selected_policy.lower()
-                in policy_name.lower()
-            ):
-                policy_docs.append(doc)
-
-        print(
-            f"\nUSING POLICY: {selected_policy}"
-        )
-
-        print(
-            f"FOUND {len(policy_docs)} POLICY CHUNKS"
-        )
-
-        if policy_docs:
-
-            policy_docs = sorted(
-                policy_docs,
-                key=lambda d: rerank_score(
-                    d,
-                    question
-                ),
-                reverse=True
-            )
-
-            docs = policy_docs[:20]
-
-        else:
-
-            docs = docs[:20]
-
-    else:
-
-        docs = docs[:20]
+    docs = docs[:20]
 
     print(
         "\n========== RETRIEVED CHUNKS ==========\n"
@@ -138,7 +79,7 @@ def ask_rag(question, history):
 
     context = "\n\n".join(
         [
-            f"Source: {doc.metadata.get('policy_name', '')}\n{doc.page_content}"
+            f"Source: {doc.metadata.get('source_file', 'Unknown')}\n{doc.page_content}"
             for doc in docs
         ]
     )
@@ -162,17 +103,17 @@ def ask_rag(question, history):
         )
 
     prompt = f"""
-You are a highly accurate insurance policy assistant.
+You are a highly accurate MSDS (Material Safety Data Sheet) assistant.
 
 STRICT RULES:
 
-1. Answer ONLY using the provided insurance documents.
+1. Answer ONLY using the provided MSDS documents.
 
 2. Do NOT use outside knowledge.
 
 3. Do NOT guess, infer, estimate, or assume.
 
-4.RESPONSE FORMATTING RULES:
+4. RESPONSE FORMATTING RULES:
 
 Write clear and professional answers.
 Use multiple paragraphs when appropriate.
@@ -181,17 +122,15 @@ Leave a blank line between paragraphs.
 5. If the provided documents contain information relevant to the question, answer using that information.
 
 6. Only reply exactly:
-"This information is not found in the provided documents."
+"This information is not found in the provided MSDS documents."
 when the retrieved context contains no relevant information.
 
-7. Do not mix information from different policies.
-
-8. If a policy name is mentioned in the question, answer only from that policy.
+7. Prioritize safety and health information when answering questions about hazards, precautions, or emergency procedures.
 
 Conversation History:
 {conversation_history}
 
-Insurance Documents:
+MSDS Documents:
 {context}
 
 Question:
