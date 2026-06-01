@@ -20,5 +20,5 @@ CHUNK_OVERLAP = 250
 TOP_K_RESULTS = 10
 
 # Paths
-FAISS_PATH = "C:\\Users\\arkob\\Downloads\\intern\\MRC\\faiss_index"
+FAISS_PATH = "C:\\Users\\arkob\\Downloads\\intern\\MRC\\MSDS-RAG-chatbot\\backend\\faiss_index"
 DOCUMENTS_PATH = "C:\\Users\\arkob\\Downloads\\intern\\MRC\\docs"

@@ -114,10 +114,31 @@ export default function App() {
           return copy;
         });
       }
-    } catch {
+    } catch (error) {
+      let errorMessage = "Connection error — could not reach the MSDS server. Please try again.";
+
+      if (axios.isAxiosError(error)) {
+        if (error.response) {
+          const status = error.response.status;
+          const serverDetail =
+            typeof error.response.data?.detail === "string"
+              ? error.response.data.detail
+              : typeof error.response.data?.message === "string"
+              ? error.response.data.message
+              : undefined;
+          errorMessage = `Server error ${status}${serverDetail ? `: ${serverDetail}` : "."}`;
+        } else if (error.request) {
+          errorMessage = "Network error — MSDS server did not respond. Check the backend and try again.";
+        } else if (error.message) {
+          errorMessage = `Request error — ${error.message}`;
+        }
+      } else if (error instanceof Error) {
+        errorMessage = `Unexpected error — ${error.message}`;
+      }
+
       setMessages((prev) => [
         ...prev,
-        { role: "assistant", content: "Connection error — could not reach the MSDS server.", time: now() },
+        { role: "assistant", content: errorMessage, time: new Date().toLocaleTimeString(), },
       ]);
     }
 
