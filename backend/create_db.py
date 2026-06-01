@@ -1,4 +1,5 @@
 import os
+import time
 
 from langchain_community.document_loaders import PyPDFLoader
 
@@ -41,7 +42,7 @@ for file in os.listdir(DOCUMENTS_PATH):
         # ADD POLICY METADATA
         for doc in docs:
 
-            doc.metadata["policy_name"] = file
+            doc.metadata["source_file"] = file
 
         documents.extend(docs)
 
@@ -63,13 +64,14 @@ print(f"Created {len(chunks)} chunks")
 embeddings = HuggingFaceEmbeddings(
     model_name=EMBEDDING_MODEL
 )
-
+print("Starting embedding generation...")
+start = time.time()
 # Create FAISS DB
 vectorstore = FAISS.from_documents(
     chunks,
     embeddings
 )
-
+print(f"Embedding generation completed in {time.time()-start:.2f} seconds")
 # Save FAISS
 vectorstore.save_local(FAISS_PATH)
 
