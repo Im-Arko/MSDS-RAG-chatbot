@@ -7,7 +7,7 @@ load_dotenv()
 GROQ_API_KEY = os.getenv("GROQ_API_KEY")
 
 # Embedding Model
-EMBEDDING_MODEL = "BAAI/bge-base-en-v1.5"
+GROQ_EMBEDDING_MODEL = os.getenv("GROQ_EMBEDDING_MODEL", "nomic-embed-text-v1_5")
 
 # LLM Model
 LLM_MODEL = "llama-3.1-8b-instant"
@@ -20,5 +20,9 @@ CHUNK_OVERLAP = 250
 TOP_K_RESULTS = 10
 
 # Paths
-FAISS_PATH = "C:\\Users\\arkob\\Downloads\\intern\\MRC\\MSDS-RAG-chatbot\\backend\\faiss_index"
-DOCUMENTS_PATH = "C:\\Users\\arkob\\Downloads\\intern\\MRC\\docs"
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+FAISS_PATH = os.getenv('FAISS_PATH', os.path.join(BASE_DIR, 'faiss_index'))
+DOCUMENTS_PATH = os.getenv(
+    'DOCUMENTS_PATH',
+    os.path.abspath(os.path.join(BASE_DIR, '..', '..', 'docs')),
+)
