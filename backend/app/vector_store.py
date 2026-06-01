@@ -5,7 +5,7 @@ from langchain_community.vectorstores import FAISS
 from app.config import (
     FAISS_PATH,
     GROQ_API_KEY,
-    GROQ_EMBEDDING_MODEL,
+    EMBEDDING_MODEL,
     TOP_K_RESULTS,
 )
 
@@ -34,7 +34,7 @@ class GroqEmbeddings(Embeddings):
 # Embedding model
 embeddings = GroqEmbeddings(
     api_key=GROQ_API_KEY,
-    model=GROQ_EMBEDDING_MODEL,
+    model=EMBEDDING_MODEL,
 )
 
 # Load FAISS
