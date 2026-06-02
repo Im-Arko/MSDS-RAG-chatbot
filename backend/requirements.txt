@@ -5,4 +5,4 @@ langchain-community
 faiss-cpu
 groq
 langchain-huggingface
-sentence-transformers
+sentence-transformers==3.0.1
