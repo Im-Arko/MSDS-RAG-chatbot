@@ -1,53 +1,33 @@
-from groq import Groq
-from langchain.embeddings.base import Embeddings
-from langchain_community.vectorstores import FAISS
-
-from app.config import (
-    FAISS_PATH,
-    GROQ_API_KEY,
-    EMBEDDING_MODEL,
-    TOP_K_RESULTS,
+from langchain_huggingface import (
+    HuggingFaceEmbeddings
 )
 
-class GroqEmbeddings(Embeddings):
-    def __init__(self, api_key: str, model: str):
-        self.client = Groq(api_key=api_key)
-        self.model = model
+from langchain_community.vectorstores import (
+    FAISS
+)
 
-    def _create_embeddings(self, texts: list[str]) -> list[list[float]]:
-        response = self.client.embeddings.create(
-            input=texts,
-            model=self.model,
-            encoding_format="float",
-        )
-        data = response.data
-        if isinstance(data, list):
-            return [item.embedding for item in data]
-        return [data.embedding]
-
-    def embed_documents(self, texts: list[str]) -> list[list[float]]:
-        return self._create_embeddings(texts)
-
-    def embed_query(self, text: str) -> list[float]:
-        return self._create_embeddings([text])[0]
+from app.config import (
+    EMBEDDING_MODEL,
+    FAISS_PATH,
+    TOP_K_RESULTS
+)
 
 # Embedding model
-embeddings = GroqEmbeddings(
-    api_key=GROQ_API_KEY,
-    model=EMBEDDING_MODEL,
+embeddings = HuggingFaceEmbeddings(
+    model_name=EMBEDDING_MODEL
 )
 
 # Load FAISS
 vectorstore = FAISS.load_local(
     FAISS_PATH,
     embeddings,
-    allow_dangerous_deserialization=True,
+    allow_dangerous_deserialization=True
 )
 
 # Retriever
 retriever = vectorstore.as_retriever(
     search_type="similarity",
     search_kwargs={
-        "k": TOP_K_RESULTS,
-    },
+        "k": TOP_K_RESULTS
+    }
 )
