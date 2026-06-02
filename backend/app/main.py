@@ -24,7 +24,7 @@ async def root():
 
     return {
         "message":
-        "Insurance RAG API Running"
+        "MSDS RAG API Running"
     }
 
 @app.post("/ask")

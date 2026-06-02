@@ -96,10 +96,15 @@ export default function App() {
 
     try {
       // const response = await axios.post("http://127.0.0.1:8000/ask", {
-      const response = await axios.post("https://msds-rag-chatbot.onrender.com/ask", {
-        query,
-        history: updated,
-      });
+      const API_URL = import.meta.env.VITE_API_URL;
+
+      const response = await axios.post(
+        `${API_URL}/ask`,
+        {
+          query,
+          history: updated,
+        }
+      );
 
       const answer = response.data.answer;
       const aiMsg: Message = { role: "assistant", content: "", time: now() };
