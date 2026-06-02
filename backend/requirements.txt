@@ -4,4 +4,5 @@ langchain
 langchain-community
 faiss-cpu
 groq
-python-dotenv
+langchain-huggingface
+sentence-transformers
