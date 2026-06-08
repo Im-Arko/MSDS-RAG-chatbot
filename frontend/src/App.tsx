@@ -98,8 +98,9 @@ export default function App() {
       // const response = await axios.post("http://127.0.0.1:8000/ask", {
       const API_URL = import.meta.env.VITE_API_URL;
 
+      const baseUrl = API_URL ?? "http://localhost:8000";
       const response = await axios.post(
-        `${API_URL}/ask`,
+        `${baseUrl}/ask`,
         {
           query,
           history: updated,
