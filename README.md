@@ -84,6 +84,15 @@ pip install -r requirements.txt
 uvicorn app.main:app --reload
 ```
 
+To use the Dify backend, add `DIFY_API_KEY` and optionally `DIFY_API_URL` to `backend/.env`:
+
+```bash
+DIFY_API_KEY=app-<your-dify-key>
+DIFY_API_URL=http://127.0.0.1/v1
+```
+
+When `DIFY_API_KEY` is present, the backend will proxy RAG prompts through Dify instead of Groq.
+
 ### Frontend
 
 ```bash

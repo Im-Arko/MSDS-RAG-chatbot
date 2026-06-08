@@ -5,11 +5,16 @@ load_dotenv()
 
 # API Keys
 GROQ_API_KEY = os.getenv("GROQ_API_KEY")
+DIFY_API_KEY = os.getenv("DIFY_API_KEY")
+DIFY_API_URL = os.getenv("DIFY_API_URL", "http://127.0.0.1/v1")
 
 # Embedding Model
 EMBEDDING_MODEL = "BAAI/bge-small-en-v1.5"
 # LLM Model
 LLM_MODEL = "llama-3.1-8b-instant"
+
+# Backend selection
+USE_DIFY = bool(DIFY_API_KEY)
 
 # Chunk Settings
 CHUNK_SIZE = 1200
