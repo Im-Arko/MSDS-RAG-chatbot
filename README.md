@@ -6,7 +6,7 @@ An AI-powered Retrieval-Augmented Generation (RAG) chatbot that enables users to
 
 🚧 **Development / Prototype Stage**
 
-The frontend is fully functional and deployed. The backend implementation is complete and works in local development; however, deployment is currently limited by hosting resource constraints. The application uses local embedding models and a FAISS vector database, which exceed the memory limits of free-tier hosting services.
+The frontend is fully functional and deployed but some features dont have backend support yet. The backend implementation is complete and works in local development; however, deployment is currently limited by hosting resource constraints. The application uses local embedding models and a FAISS vector database, which exceed the memory limits of free-tier hosting services.
 
 Future work includes:
 
