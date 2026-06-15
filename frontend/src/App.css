@@ -1,3 +1,6 @@
+@import url('https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/dist/tabler-icons.min.css');
+
+
 .app-shell {
   height: 100vh;
   display: flex;
@@ -16,7 +19,7 @@
   flex-direction: column;
   background: var(--surface);
   border: 1px solid var(--border);
-  border-radius: 2px;
+  border-radius: 12px;
   overflow: hidden;
   position: relative;
 }
@@ -50,7 +53,7 @@
   height: 36px;
   background: var(--accent-glow);
   border: 1px solid var(--accent-dim);
-  border-radius: 2px;
+  border-radius: 99px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -89,7 +92,7 @@
   padding: 4px 10px;
   background: rgba(34,197,94,0.07);
   border: 1px solid rgba(34,197,94,0.2);
-  border-radius: 2px;
+  border-radius: 99px;
   font-size: 10px;
   font-family: var(--font-mono);
   color: var(--safe);
@@ -128,7 +131,7 @@
   padding: 5px 11px;
   background: transparent;
   border: 1px solid var(--border-bright);
-  border-radius: 2px;
+  border-radius: 12px;
   color: var(--text-secondary);
   font-size: 11px;
   font-family: var(--font-mono);
@@ -170,7 +173,7 @@
   width: 28px;
   height: 28px;
   flex-shrink: 0;
-  border-radius: 2px;
+  border-radius: 99px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -213,7 +216,7 @@
 
 .bubble {
   padding: 12px 15px;
-  border-radius: 2px;
+  border-radius: 12px;
   font-size: 13.5px;
   line-height: 1.65;
   white-space: pre-wrap;
@@ -224,7 +227,7 @@
   background: var(--surface-2);
   border: 1px solid var(--border);
   color: var(--text-primary);
-  border-left: 2px solid var(--accent-dim);
+  border-left: px solid var(--accent-dim);
 }
 
 .bubble.user-bubble {
@@ -290,7 +293,7 @@
   flex: 1;
   background: var(--surface-3);
   border: 1px solid var(--border-bright);
-  border-radius: 2px;
+  border-radius: 12px;
   padding: 10px 14px;
   color: var(--text-primary);
   font-family: var(--font-sans);
@@ -315,7 +318,7 @@
   height: 42px;
   background: var(--accent);
   border: none;
-  border-radius: 2px;
+  border-radius: 12px;
   cursor: pointer;
   display: flex;
   align-items: center;
@@ -350,4 +353,22 @@
   font-family: var(--font-mono);
   font-size: 10px;
   color: var(--text-muted);
+}
+.reasoning-dropdown {
+  margin-bottom: 8px;
+  font-size: 12px;
+  color: #394a5f;
+}
+
+.reasoning-dropdown summary {
+  cursor: pointer;
+  opacity: 0.8;
+}
+
+.reasoning-text {
+  white-space: pre-wrap;
+  background:  #18202c;
+  padding: 8px;
+  border-radius: 12px;
+  margin-top: 6px;
 }

@@ -42,7 +42,7 @@ def rerank_score(doc, question):
     return score
 
 
-def ask_rag(question, history):
+# def ask_rag(question, history):
 
     # retrieve relevant chunks
     docs = vectorstore.similarity_search(

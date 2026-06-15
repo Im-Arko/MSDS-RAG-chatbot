@@ -6,7 +6,7 @@ load_dotenv()
 # API Keys
 GROQ_API_KEY = os.getenv("GROQ_API_KEY")
 DIFY_API_KEY = os.getenv("DIFY_API_KEY")
-DIFY_API_URL = os.getenv("DIFY_API_URL", "http://127.0.0.1/v1")
+DIFY_API_URL = os.getenv("DIFY_API_URL")
 
 # Embedding Model
 EMBEDDING_MODEL = "BAAI/bge-small-en-v1.5"

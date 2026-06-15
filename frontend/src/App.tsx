@@ -1,10 +1,24 @@
 import { useState, useRef, useEffect } from "react";
 import axios from "axios";
 import "./App.css";
+import ReactMarkdown from "react-markdown";
+
+function splitThink(text: string) {
+  const match = text.match(/<think>([\s\S]*?)<\/think>/);
+
+  const reasoning = match ? match[1].trim() : "";
+
+  const answer = text
+    .replace(/<think>[\s\S]*?<\/think>/, "")
+    .trim();
+
+  return { reasoning, answer };
+}
 
 interface Message {
   role: "user" | "assistant";
   content: string;
+  reasoning?: string;
   time: string;
 }
 
@@ -64,6 +78,7 @@ const HISTORY: ChatSession[] = [
   { id: "5", title: "Chlorine gas exposure limits", date: "Mon 26 May", messages: [] },
 ];
 
+
 export default function App() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
@@ -95,7 +110,6 @@ export default function App() {
     setLoading(true);
 
     try {
-      // const response = await axios.post("http://127.0.0.1:8000/ask", {
       const API_URL = import.meta.env.VITE_API_URL;
 
       const baseUrl = API_URL ?? "http://localhost:8000";
@@ -107,8 +121,14 @@ export default function App() {
         }
       );
 
-      const answer = response.data.answer;
-      const aiMsg: Message = { role: "assistant", content: "", time: now() };
+      const raw = response.data.answer;
+      const { reasoning, answer } = splitThink(raw);
+      const aiMsg: Message = {
+        role: "assistant",
+        content: "",
+        reasoning,
+        time: now(),
+      };
       setMessages((prev) => [...prev, aiMsg]);
 
       let streamed = "";
@@ -122,7 +142,7 @@ export default function App() {
         });
       }
     } catch (error) {
-      let errorMessage = "Connection error — could not reach the MSDS server. Please try again.";
+      let errorMessage = "Connection error — could not reach the server. Please try again.";
 
       if (axios.isAxiosError(error)) {
         if (error.response) {
@@ -135,7 +155,7 @@ export default function App() {
               : undefined;
           errorMessage = `Server error ${status}${serverDetail ? `: ${serverDetail}` : "."}`;
         } else if (error.request) {
-          errorMessage = "Network error — MSDS server did not respond. Check the backend and try again.";
+          errorMessage = "Network error — the server did not respond. Check the backend and try again.";
         } else if (error.message) {
           errorMessage = `Request error — ${error.message}`;
         }
@@ -145,7 +165,7 @@ export default function App() {
 
       setMessages((prev) => [
         ...prev,
-        { role: "assistant", content: errorMessage, time: new Date().toLocaleTimeString(), },
+        { role: "assistant", content: errorMessage, time: new Date().toLocaleTimeString() },
       ]);
     }
 
@@ -172,41 +192,41 @@ export default function App() {
         <div className="topbar-logo">
           <div className="logo-stripe" />
           <div>
-            <div className="logo-text">MSDS·AI</div>
-            <div className="logo-sub">Safety Data Assistant</div>
+            <div className="logo-text">MSDS Assistant</div>
+            <div className="logo-sub">Safety data, simplified</div>
           </div>
         </div>
         <div className="topbar-center">
           <span className="topbar-session">
             {messages.length > 0
-              ? `${messages.filter((m) => m.role === "user").length} queries this session`
-              : "New session"}
+              ? `${messages.filter((m) => m.role === "user").length} questions this session`
+              : "New conversation"}
           </span>
         </div>
         <div className="topbar-right">
           <div className="status-pill">
             <span className="pulse-dot" />
-            System online
+            Ready
           </div>
           <button className="topbar-btn" title="Settings" aria-label="Settings">
             <i className="ti ti-settings" aria-hidden="true" />
           </button>
           <button className="topbar-btn" title="Help" aria-label="Help">
-            <i className="ti ti-help" aria-hidden="true" />
+            <i className="ti ti-help-circle" aria-hidden="true" />
           </button>
         </div>
       </header>
 
       {/* ── SIDEBAR ── */}
       <aside className="sidebar">
-        <div className="sidebar-section-label">Actions</div>
+        <div className="sidebar-section-label">Start</div>
         <button className="new-chat-btn" onClick={newChat}>
           <i className="ti ti-plus" aria-hidden="true" />
-          New query session
+          New conversation
         </button>
 
         <div className="sidebar-divider" />
-        <div className="sidebar-section-label">Recent sessions</div>
+        <div className="sidebar-section-label">Recent</div>
 
         <nav className="chat-history">
           {HISTORY.map((h) => (
@@ -227,11 +247,11 @@ export default function App() {
         <div className="sidebar-footer">
           <div className="sidebar-footer-item">
             <i className="ti ti-database" aria-hidden="true" />
-            MSDS Database
+            Browse SDS library
           </div>
           <div className="sidebar-footer-item">
             <i className="ti ti-upload" aria-hidden="true" />
-            Upload SDS file
+            Upload a data sheet
           </div>
           <div className="sidebar-footer-item">
             <i className="ti ti-settings" aria-hidden="true" />
@@ -245,7 +265,7 @@ export default function App() {
 
         {/* Context / quick-prompt bar */}
         <div className="context-bar">
-          <span className="context-bar-label">Quick:</span>
+          <span className="context-bar-label">Try:</span>
           <div className="quick-chips">
             {QUICK_PROMPTS.map((p) => (
               <button key={p} className="chip" onClick={() => sendMessage(p)}>
@@ -261,11 +281,11 @@ export default function App() {
             <div className="empty-state">
               <div className="empty-hero">
                 <div className="empty-icon">
-                  <img src="assets\favicon.png" alt="" />
+                  <img src="assets/favicon.png" alt="" />
                 </div>
                 <div>
-                  <div className="empty-title">MSDS Safety Assistant</div>
-                  <div className="empty-sub">AI · Material Safety Data Sheet query system · v2.0</div>
+                  <div className="empty-title">MSDS Assistant</div>
+                  <div className="empty-sub">Safety data, simplified</div>
                 </div>
               </div>
               <div className="empty-grid">
@@ -285,18 +305,29 @@ export default function App() {
               {messages.map((msg, i) => (
                 <div key={i} className={`msg-row ${msg.role === "user" ? "user" : ""}`}>
                   <div className={`msg-avatar ${msg.role === "user" ? "usr" : "ai"}`}>
-                    {msg.role === "user" ? "YOU" : "AI"}
+                    {msg.role === "user" ? "You" : "AI"}
                   </div>
                   <div className="msg-body">
                     <div className="msg-meta">
                       <span className="msg-who">
-                        {msg.role === "user" ? "Operator" : "MSDS Agent"}
+                        {msg.role === "user" ? "You" : "Assistant"}
                       </span>
                       <span className="msg-time">{msg.time}</span>
                     </div>
                     <div className={`bubble ${msg.role === "user" ? "user" : "ai"}`}>
-                      {msg.content}
-                    </div>
+
+                      {msg.role === "assistant" && msg.reasoning && (
+                        <details className="reasoning-dropdown">
+                          <summary>Show reasoning</summary>
+                          <pre className="reasoning-text">
+                            {msg.reasoning}
+                          </pre>
+                        </details>
+                      )}
+
+                      <ReactMarkdown>{msg.content}</ReactMarkdown>
+
+                    </div>  
                   </div>
                 </div>
               ))}
@@ -306,7 +337,7 @@ export default function App() {
                   <div className="ldots">
                     <span /><span /><span />
                   </div>
-                  <span className="loading-label">Querying safety database...</span>
+                  <span className="loading-label">Looking up safety data…</span>
                 </div>
               )}
               <div ref={messagesEndRef} />
@@ -321,7 +352,7 @@ export default function App() {
               <textarea
                 ref={textareaRef}
                 className="input-field"
-                placeholder="Ask about hazards, PPE, first aid, storage, disposal, or regulatory limits..."
+                placeholder="Ask about hazards, PPE, first aid, storage, disposal, or regulatory limits…"
                 value={input}
                 onChange={(e) => { setInput(e.target.value); autoResize(); }}
                 onKeyDown={handleKeyDown}
@@ -337,7 +368,7 @@ export default function App() {
               </button>
             </div>
             <div className="input-footer">
-              <span className="input-hint">Enter to send · Shift+Enter for newline</span>
+              <span className="input-hint">Enter to send · Shift+Enter for new line</span>
               <span className="input-hint">{input.length} chars</span>
             </div>
           </div>
